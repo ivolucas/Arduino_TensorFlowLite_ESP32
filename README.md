@@ -12,6 +12,12 @@ git co https://github.com/tensorflow/tensorflow.git
 cd tensorflow
 make -f tensorflow/lite/micro/tools/make/Makefile TARGET=esp generate_hello_world_esp_project # use gmake for OSX
 open tensorflow/lite/micro/tools/make/gen/esp_xtensa-esp32/prj/hello_world
+# Take tensorflow/lite/micro/tools/make/gen/esp_xtensa-esp32/prj/hello_world/esp-idf/components/tfmicro/
+
+# Fix include paths
+find src -type f -exec sed -i "" 's|#include "flatbuffers/|#include "third_party/flatbuffers/include/flatbuffers/|g' {} +
+find src -type f -exec sed -i "" 's|#include "fixedpoint/|#include "third_party/gemmlowp/fixedpoint/|g' {} +
+find src -type f -exec sed -i "" 's|#include "ruy/|#include "third_party/ruy/ruy/|g' {} +
 ```
 
 This is the base file.
