@@ -12,8 +12,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
-#ifndef TENSORFLOW_LITE_KERNELS_INTERNAL_TENSOR_H_
-#define TENSORFLOW_LITE_KERNELS_INTERNAL_TENSOR_H_
+#ifndef TENSORFLOW_LITE_KERNELS_INTERNAL_PORTABLE_TENSOR_H_
+#define TENSORFLOW_LITE_KERNELS_INTERNAL_PORTABLE_TENSOR_H_
 
 #include <complex>
 #include <vector>
@@ -21,7 +21,6 @@ limitations under the License.
 #include "tensorflow/lite/c/common.h"
 #include "tensorflow/lite/kernels/internal/tensor_ctypes.h"
 #include "tensorflow/lite/kernels/internal/types.h"
-#include "tensorflow/lite/string_util.h"
 
 namespace tflite {
 
@@ -76,12 +75,12 @@ class VectorOfTensors {
 
 // A list of quantized tensors in a format that can be used by kernels like
 // split and concatenation.
-class VectorOfQuantizedTensors : public VectorOfTensors<uint8> {
+class VectorOfQuantizedTensors : public VectorOfTensors<uint8_t> {
  public:
   // Build with the tensors in 'tensor_list'.
   VectorOfQuantizedTensors(const TfLiteContext& context,
                            const TfLiteIntArray& tensor_list)
-      : VectorOfTensors<uint8>(context, tensor_list) {
+      : VectorOfTensors<uint8_t>(context, tensor_list) {
     for (int i = 0; i < tensor_list.size; ++i) {
       TfLiteTensor* t = &context.tensors[tensor_list.data[i]];
       zero_point_.push_back(t->params.zero_point);
@@ -90,10 +89,10 @@ class VectorOfQuantizedTensors : public VectorOfTensors<uint8> {
   }
 
   const float* scale() const { return scale_.data(); }
-  const int32* zero_point() const { return zero_point_.data(); }
+  const int32_t* zero_point() const { return zero_point_.data(); }
 
  private:
-  std::vector<int32> zero_point_;
+  std::vector<int32_t> zero_point_;
   std::vector<float> scale_;
 };
 
@@ -119,29 +118,6 @@ class SequentialTensorWriter {
   T* output_ptr_;
 };
 
-// String ops are not yet supported on platforms w/ static memory.
-#ifndef TF_LITE_STATIC_MEMORY
-template <>
-class SequentialTensorWriter<string> {
- public:
-  SequentialTensorWriter(const TfLiteTensor* input, TfLiteTensor* output)
-      : input_(input), output_(output) {}
-  ~SequentialTensorWriter() { buffer_.WriteToTensor(output_, nullptr); }
-
-  void Write(int position) { this->WriteN(position, 1); }
-  void WriteN(int position, int len) {
-    for (int i = 0; i < len; i++) {
-      buffer_.AddString(GetString(input_, position + i));
-    }
-  }
-
- private:
-  const TfLiteTensor* input_;
-  TfLiteTensor* output_;
-  DynamicBuffer buffer_;
-};
-#endif  // TF_LITE_STATIC_MEMORY
-
 }  // namespace tflite
 
-#endif  // TENSORFLOW_LITE_KERNELS_INTERNAL_TENSOR_H_
+#endif  // TENSORFLOW_LITE_KERNELS_INTERNAL_PORTABLE_TENSOR_H_
